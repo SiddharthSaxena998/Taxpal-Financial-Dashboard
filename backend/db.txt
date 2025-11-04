@@ -1,0 +1,95 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-- Table for Users
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    fullname VARCHAR(100) NOT NULL,
+    email VARCHAR(150) UNIQUE NOT NULL,
+    country VARCHAR(100),
+    income_bracket VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- A single table for both Incomes and Expenses
+CREATE TABLE transactions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    type ENUM('income', 'expense') NOT NULL,
+    description VARCHAR(255) NOT NULL,
+    amount DECIMAL(15, 2) NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    date DATE NOT NULL,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Table for Budgets
+CREATE TABLE budgets (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    month VARCHAR(7) NOT NULL, -- Format: 'YYYY-MM'
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY (user_id, category, month) -- A user can only have one budget per category per month
+);
+
+-- Table for Custom Categories
+CREATE TABLE categories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    type ENUM('income', 'expense') NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY (user_id, name, type) -- Prevents duplicate category names for the same user and type
+);
+
+-- Table for Tax Estimation History
+CREATE TABLE tax_estimates (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    quarter VARCHAR(50) NOT NULL,
+    gross_income DECIMAL(15,2) NOT NULL,
+    business_expenses DECIMAL(15,2) DEFAULT 0,
+    retirement_contributions DECIMAL(15,2) DEFAULT 0,
+    health_insurance_premiums DECIMAL(15,2) DEFAULT 0,
+    home_office_deduction DECIMAL(15,2) DEFAULT 0,
+    total_deductions DECIMAL(15,2) NOT NULL,
+    estimated_tax DECIMAL(15,2) NOT NULL,
+    state_province VARCHAR(100) DEFAULT '',
+    calculation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Table for Report Generation History
+CREATE TABLE reports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    report_type VARCHAR(100) NOT NULL,
+    period VARCHAR(100) NOT NULL,
+    file_path VARCHAR(255),
+    generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Table for Custom Calendar Events
+CREATE TABLE calendar_events (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    date DATE NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    type VARCHAR(50) DEFAULT 'custom',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
