@@ -5,6 +5,7 @@
 npm-debug.log*
 yarn-debug.log*
 pnpm-debug.log*
+*.log
 
 # Environment variables
 .env
@@ -27,3 +28,4 @@ Thumbs.db
 
 # others
 db2.txt
+/uploads
