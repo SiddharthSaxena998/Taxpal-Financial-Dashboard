@@ -91,5 +91,13 @@ CREATE TABLE calendar_events (
 );
 
 
+ALTER TABLE users
+ADD COLUMN phone VARCHAR(20) NULL,
+ADD COLUMN company VARCHAR(100) NULL,
+ADD COLUMN emailNotifications TINYINT(1) DEFAULT 1,
+ADD COLUMN budgetAlerts TINYINT(1) DEFAULT 1,
+ADD COLUMN taxReminders TINYINT(1) DEFAULT 1,
+ADD COLUMN monthlyReports TINYINT(1) DEFAULT 0;
+
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

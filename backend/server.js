@@ -11,6 +11,7 @@ const categoryRoutes = require("./src/routes/categories");
 const taxRoutes = require("./src/routes/tax");
 const calendarRoutes = require("./src/routes/calendar");
 const reportRoutes = require("./src/routes/reports");
+const userSettingsRoutes = require("./src/routes/userSettingsRoutes");
 
 require("./src/config/db");
 
@@ -28,6 +29,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/tax", taxRoutes);
 app.use("/api/calendar", calendarRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api", userSettingsRoutes);
 
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
