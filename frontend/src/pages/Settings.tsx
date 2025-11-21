@@ -10,6 +10,7 @@ import { Plus, Pencil, Trash2 } from 'lucide-react';
 import api from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 export default function Settings() {
   const [categories, setCategories] = useState<any>({ income: [], expense: [] });
@@ -17,7 +18,6 @@ export default function Settings() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
   const [profileData, setProfileData] = useState({
-    username: '',
     name: '',
     email: '',
     phone: '',
@@ -54,7 +54,6 @@ export default function Settings() {
     fetchCategories();
     if (user) {
       setProfileData({
-        username: (user as any).username || '', 
         name: (user as any).name || '',
         email: user.email || '',
         phone: '',
@@ -186,6 +185,24 @@ export default function Settings() {
       toast({
         title: 'Error',
         description: error.response?.data?.message || 'Failed to change password',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      await api.delete('/users/account');
+      localStorage.clear();
+      window.location.href = '/auth';
+      toast({
+        title: 'Account Deleted',
+        description: 'Your account has been permanently deleted.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to delete account',
         variant: 'destructive',
       });
     }
@@ -404,16 +421,6 @@ export default function Settings() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="username">Username</Label>
-                    <Input
-                    id="username"
-                    placeholder="john_doe"
-                    value={profileData.username}
-                    onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
-                    required
-                    />
-                  </div>
-                  <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
                       id="email"
@@ -574,9 +581,31 @@ export default function Settings() {
                 <p className="mt-2 text-sm text-muted-foreground">
                   Once you delete your account, there is no going back. Please be certain.
                 </p>
-                <Button variant="destructive" className="mt-4">
-                  Delete Account
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" className="mt-4">
+                      Delete Account
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete your account
+                        and remove all your data from our servers including transactions, budgets, and reports.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={handleDeleteAccount}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Delete Account
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </CardContent>
           </Card>

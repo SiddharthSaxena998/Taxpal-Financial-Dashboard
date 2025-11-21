@@ -11,6 +11,7 @@ import { ArrowUp, ArrowDown, AlertCircle, RefreshCw, TrendingUp, Plus } from 'lu
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import api from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { formatCurrency as formatCurrencyUtil, getUserCountry } from '@/lib/currency';
 
 interface DashboardStats {
   summaryCards: {
@@ -123,15 +124,8 @@ export default function Dashboard() {
   });
   const barData = Object.values(monthlyData);
 
-  // const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
-  const formatCurrency = (value: any) => {
-    const num = Number(value);
-    if (isNaN(num)) {
-      console.warn("formatCurrency received invalid value:", value);
-      return "$0.00";
-    }
-    return `$${num.toFixed(2)}`;
-  };
+  const userCountry = getUserCountry();
+  const formatCurrency = (value: number) => formatCurrencyUtil(value, userCountry);
 
   const savingsChange = stats.summaryCards.savingsRate > 0 ? '+' : '';
 

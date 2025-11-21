@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, Download, Trash2 } from 'lucide-react';
+import { FileText, Download, Trash2, Eye } from 'lucide-react';
 import api from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface Report {
   id: number;
@@ -19,6 +20,8 @@ interface Report {
 export default function Reports() {
   const [reports, setReports] = useState<Report[]>([]);
   const [generating, setGenerating] = useState(false);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [viewingReport, setViewingReport] = useState<{ url: string; type: string } | null>(null);
   const [formData, setFormData] = useState({
     reportType: 'Income Statement',
     period: 'Current Month',
@@ -63,8 +66,28 @@ export default function Reports() {
     }
   };
 
-  const handleDownload = async (reportId: number) => {
+  const handleView = async (reportId: number, report: Report) => {
     try {
+      const fileExt = report.file_path.split('.').pop()?.toLowerCase();
+      const response = await api.get(`/reports/download/${reportId}`, {
+        responseType: 'blob',
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      setViewingReport({ url, type: fileExt || 'pdf' });
+      setViewDialogOpen(true);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to view report',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDownload = async (reportId: number, report: Report) => {
+    try {
+      const fileExt = report.file_path.split('.').pop()?.toLowerCase();
       const response = await api.get(`/reports/download/${reportId}`, {
         responseType: 'blob',
       });
@@ -72,10 +95,11 @@ export default function Reports() {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `report-${reportId}.pdf`);
+      link.setAttribute('download', `report-${reportId}.${fileExt}`);
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       toast({
         title: 'Error',
@@ -209,20 +233,32 @@ export default function Reports() {
                           {report.file_path.split('.').pop()}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDownload(report.id)}
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(report.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleView(report.id, report)}
+                              title="View Report"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDownload(report.id, report)}
+                              title="Download Report"
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDelete(report.id)}
+                              title="Delete Report"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -241,6 +277,37 @@ export default function Reports() {
           </Card>
         </div>
       </div>
+
+      {/* View Dialog */}
+      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <DialogContent className="max-w-4xl h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Report Preview</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-auto">
+            {viewingReport && viewingReport.type === 'pdf' ? (
+              <iframe 
+                src={viewingReport.url} 
+                className="w-full h-full min-h-[600px]"
+                title="Report Preview"
+              />
+            ) : viewingReport && viewingReport.type === 'csv' ? (
+              <div className="p-4">
+                <p className="text-sm text-muted-foreground mb-2">CSV Preview:</p>
+                <iframe 
+                  src={viewingReport.url} 
+                  className="w-full h-full min-h-[600px] border rounded"
+                  title="CSV Preview"
+                />
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-muted-foreground">Unable to preview this file type</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

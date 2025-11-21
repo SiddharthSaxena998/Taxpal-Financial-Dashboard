@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import api from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { getCurrencySymbol, getUserCountry } from '@/lib/currency';
 
 interface Transaction {
   id: number;
@@ -35,6 +36,8 @@ export default function Transactions() {
     notes: '',
   });
   const { toast } = useToast();
+  const userCountry = getUserCountry();
+  const currencySymbol = getCurrencySymbol(userCountry);
 
   const fetchTransactions = async () => {
     try {
@@ -261,7 +264,7 @@ export default function Transactions() {
                   <TableCell className="font-medium">{transaction.description}</TableCell>
                   <TableCell>{transaction.category}</TableCell>
                   <TableCell className={transaction.type === 'income' ? 'text-success' : 'text-destructive'}>
-                    {transaction.type === 'income' ? '+' : '-'}${parseFloat(transaction.amount.toString()).toFixed(2)}
+                    {transaction.type === 'income' ? '+' : '-'}{currencySymbol}{parseFloat(transaction.amount.toString()).toFixed(2)}
                   </TableCell>
                   <TableCell>
                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${

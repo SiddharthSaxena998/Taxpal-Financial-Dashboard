@@ -10,6 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { Plus, Pencil, Trash2, Target } from 'lucide-react';
 import api from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { getCurrencySymbol, getUserCountry } from '@/lib/currency';
 
 interface Budget {
   id: number;
@@ -32,6 +33,8 @@ export default function Budgets() {
     description: '',
   });
   const { toast } = useToast();
+  const userCountry = getUserCountry();
+  const currencySymbol = getCurrencySymbol(userCountry);
 
   const fetchBudgets = async () => {
     try {
@@ -247,16 +250,16 @@ export default function Budgets() {
               <CardContent className="space-y-4">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Budget</span>
-                  <span className="font-medium">${parseFloat(budget.amount.toString()).toFixed(2)}</span>
+                  <span className="font-medium">{currencySymbol}{parseFloat(budget.amount.toString()).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Spent</span>
-                  <span className="font-medium">${parseFloat(budget.spent.toString()).toFixed(2)}</span>
+                  <span className="font-medium">{currencySymbol}{parseFloat(budget.spent.toString()).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Remaining</span>
                   <span className={`font-medium ${remaining >= 0 ? 'text-success' : 'text-destructive'}`}>
-                    ${Math.abs(remaining).toFixed(2)}
+                    {currencySymbol}{Math.abs(remaining).toFixed(2)}
                   </span>
                 </div>
                 <div className="space-y-2">

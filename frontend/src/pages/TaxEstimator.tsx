@@ -7,8 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { FileText } from 'lucide-react';
 import api from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { COUNTRIES, getCountryStates, formatCurrency, getUserCountry, setUserCountry, getCurrencySymbol, type CountryKey } from '@/lib/currency';
 
 export default function TaxEstimator() {
+  const defaultCountry = getUserCountry();
+  const defaultState = getCountryStates(defaultCountry)[0] || '';
+  const [currentCurrencySymbol, setCurrentCurrencySymbol] = useState(getCurrencySymbol(defaultCountry));
+  
   const [formData, setFormData] = useState({
     grossIncome: '',
     businessExpenses: '',
@@ -16,8 +21,8 @@ export default function TaxEstimator() {
     healthInsurancePremiums: '',
     homeOfficeDeduction: '',
     quarter: 'Q2 (Apr-Jun 2025)',
-    country: 'United States',
-    stateProvince: 'California',
+    country: defaultCountry,
+    stateProvince: defaultState,
     filingStatus: 'single',
   });
   const [result, setResult] = useState<any>(null);
@@ -65,15 +70,24 @@ export default function TaxEstimator() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="country">Country/Region</Label>
-                    <Select value={formData.country} onValueChange={(value) => setFormData({ ...formData, country: value })}>
+                    <Select 
+                      value={formData.country} 
+                      onValueChange={(value) => {
+                        const states = getCountryStates(value);
+                        setFormData({ ...formData, country: value, stateProvince: states[0] || '' });
+                        setUserCountry(value);
+                        setCurrentCurrencySymbol(getCurrencySymbol(value));
+                      }}
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="United States">United States</SelectItem>
-                        <SelectItem value="India">India</SelectItem>
-                        <SelectItem value="UK">United Kingdom</SelectItem>
-                        <SelectItem value="Canada">Canada</SelectItem>
+                        {Object.keys(COUNTRIES).map((country) => (
+                          <SelectItem key={country} value={country}>
+                            {COUNTRIES[country as CountryKey].name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -85,10 +99,11 @@ export default function TaxEstimator() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="California">California</SelectItem>
-                        <SelectItem value="New York">New York</SelectItem>
-                        <SelectItem value="Texas">Texas</SelectItem>
-                        <SelectItem value="Florida">Florida</SelectItem>
+                        {getCountryStates(formData.country).map((state) => (
+                          <SelectItem key={state} value={state}>
+                            {state}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -127,7 +142,7 @@ export default function TaxEstimator() {
                   <Label>Income</Label>
                   <div className="space-y-2">
                     <div className="relative">
-                      <span className="absolute left-3 top-3 text-muted-foreground">$</span>
+                      <span className="absolute left-3 top-3 text-muted-foreground">{currentCurrencySymbol}</span>
                       <Input
                         type="number"
                         step="0.01"
@@ -146,7 +161,7 @@ export default function TaxEstimator() {
                   <Label>Deductions</Label>
                   <div className="grid gap-3 md:grid-cols-2">
                     <div className="relative">
-                      <span className="absolute left-3 top-3 text-muted-foreground">$</span>
+                      <span className="absolute left-3 top-3 text-muted-foreground">{currentCurrencySymbol}</span>
                       <Input
                         type="number"
                         step="0.01"
@@ -159,7 +174,7 @@ export default function TaxEstimator() {
                     </div>
 
                     <div className="relative">
-                      <span className="absolute left-3 top-3 text-muted-foreground">$</span>
+                      <span className="absolute left-3 top-3 text-muted-foreground">{currentCurrencySymbol}</span>
                       <Input
                         type="number"
                         step="0.01"
@@ -172,7 +187,7 @@ export default function TaxEstimator() {
                     </div>
 
                     <div className="relative">
-                      <span className="absolute left-3 top-3 text-muted-foreground">$</span>
+                      <span className="absolute left-3 top-3 text-muted-foreground">{currentCurrencySymbol}</span>
                       <Input
                         type="number"
                         step="0.01"
@@ -185,7 +200,7 @@ export default function TaxEstimator() {
                     </div>
 
                     <div className="relative">
-                      <span className="absolute left-3 top-3 text-muted-foreground">$</span>
+                      <span className="absolute left-3 top-3 text-muted-foreground">{currentCurrencySymbol}</span>
                       <Input
                         type="number"
                         step="0.01"
@@ -224,20 +239,20 @@ export default function TaxEstimator() {
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Quarterly Taxable Income</span>
-                      <span className="text-sm font-medium">${parseFloat(result.quarterlyTaxableIncome).toFixed(2)}</span>
+                      <span className="text-sm font-medium">{formatCurrency(parseFloat(result.quarterlyTaxableIncome), formData.country)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Estimated Annual Income</span>
-                      <span className="text-sm font-medium">${parseFloat(result.estimatedAnnualTaxableIncome).toFixed(2)}</span>
+                      <span className="text-sm font-medium">{formatCurrency(parseFloat(result.estimatedAnnualTaxableIncome), formData.country)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Estimated Annual Tax</span>
-                      <span className="text-sm font-medium">${parseFloat(result.estimatedAnnualTax).toFixed(2)}</span>
+                      <span className="text-sm font-medium">{formatCurrency(parseFloat(result.estimatedAnnualTax), formData.country)}</span>
                     </div>
                     <div className="border-t pt-3">
                       <div className="flex justify-between">
                         <span className="font-medium">Estimated Quarterly Tax</span>
-                        <span className="text-xl font-bold text-primary">${parseFloat(result.estimatedQuarterlyTax).toFixed(2)}</span>
+                        <span className="text-xl font-bold text-primary">{formatCurrency(parseFloat(result.estimatedQuarterlyTax), formData.country)}</span>
                       </div>
                     </div>
                   </div>
